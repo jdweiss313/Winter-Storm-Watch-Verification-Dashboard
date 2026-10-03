@@ -58,37 +58,42 @@
     let stormDataList = [];
 
     async function loadAllStorms() {
-      const selectBox = document.getElementById("stormSelect");
-      stormDataList = [];
+  const selectBox = document.getElementById("stormSelect");
+  stormDataList = [];
 
-      for (const fileName of STORM_FILES) {
-        try {
-          const response = await fetch(fileName);
-          if (response.ok) {
-            const data = await response.json();
-            stormDataList.push(data);
-          }
-        } catch (err) {
-          console.error(`Failed to load ${fileName}:`, err);
-        }
+  try {
+    // 1. Fetch manifest listing all storm JSON files
+    const manifestResponse = await fetch('manifest.json');
+    const stormFiles = await manifestResponse.json(); // e.g. ["November_24_2025.json", "December_01_2025.json"]
+
+    // 2. Load each JSON file
+    for (const fileName of stormFiles) {
+      const response = await fetch(fileName);
+      if (response.ok) {
+        const data = await response.json();
+        stormDataList.push(data);
       }
-
-      selectBox.innerHTML = "";
-
-      if (stormDataList.length === 0) {
-        selectBox.innerHTML = '<option value="">No storms found</option>';
-        return;
-      }
-
-      stormDataList.forEach((storm, index) => {
-        const option = document.createElement("option");
-        option.value = index;
-        option.textContent = storm.name || storm.id || `Storm ${index + 1}`;
-        selectBox.appendChild(option);
-      });
-
-      updateDashboard();
     }
+  } catch (err) {
+    console.error("Error loading manifest/storms:", err);
+  }
+
+  selectBox.innerHTML = "";
+
+  if (stormDataList.length === 0) {
+    selectBox.innerHTML = '<option value="">No storms found</option>';
+    return;
+  }
+
+  stormDataList.forEach((storm, index) => {
+    const option = document.createElement("option");
+    option.value = index;
+    option.textContent = storm.name || storm.id || `Storm ${index + 1}`;
+    selectBox.appendChild(option);
+  });
+
+  updateDashboard();
+}
 
     function updateDashboard() {
       const selectBox = document.getElementById("stormSelect");
