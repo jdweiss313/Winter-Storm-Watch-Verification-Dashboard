@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Winter Storm Verification Dashboard</title>
+  <title>Winter Storm Watch Verification Dashboard</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 15px; background-color: #f9f9f9; }
     .select-container { margin-bottom: 20px; }
@@ -50,50 +50,56 @@
   </div>
 
   <script>
-    // List your storm JSON filenames here
-    const STORM_FILES = [
-      "November_24_2025.json"
-    ];
-
     let stormDataList = [];
 
     async function loadAllStorms() {
-  const selectBox = document.getElementById("stormSelect");
-  stormDataList = [];
+      const selectBox = document.getElementById("stormSelect");
+      stormDataList = [];
 
-  try {
-    // 1. Fetch manifest listing all storm JSON files
-    const manifestResponse = await fetch('manifest.json');
-    const stormFiles = await manifestResponse.json(); // e.g. ["November_24_2025.json", "December_01_2025.json"]
+      // Cache-buster parameter to guarantee fresh reads from GitHub
+      const cacheBuster = `?t=${new Date().getTime()}`;
 
-    // 2. Load each JSON file
-    for (const fileName of stormFiles) {
-      const response = await fetch(fileName);
-      if (response.ok) {
-        const data = await response.json();
-        stormDataList.push(data);
+      try {
+        // 1. Fetch manifest file listing all storm JSON files
+        const manifestResponse = await fetch(`manifest.json${cacheBuster}`);
+        if (!manifestResponse.ok) throw new Error("Could not load manifest.json");
+        
+        const stormFiles = await manifestResponse.json();
+
+        // 2. Load each JSON file listed in manifest
+        for (const fileName of stormFiles) {
+          try {
+            const response = await fetch(`${fileName}${cacheBuster}`);
+            if (response.ok) {
+              const data = await response.json();
+              stormDataList.push(data);
+            }
+          } catch (err) {
+            console.error(`Error loading ${fileName}:`, err);
+          }
+        }
+      } catch (err) {
+        console.error("Error reading manifest:", err);
       }
+
+      selectBox.innerHTML = "";
+
+      if (stormDataList.length === 0) {
+        selectBox.innerHTML = '<option value="">No storms found</option>';
+        return;
+      }
+
+      // Populate dropdown list
+      stormDataList.forEach((storm, index) => {
+        const option = document.createElement("option");
+        option.value = index;
+        option.textContent = storm.name || storm.id || storm.img_filename || `Storm ${index + 1}`;
+        selectBox.appendChild(option);
+      });
+
+      // Load first storm automatically
+      updateDashboard();
     }
-  } catch (err) {
-    console.error("Error loading manifest/storms:", err);
-  }
-
-  selectBox.innerHTML = "";
-
-  if (stormDataList.length === 0) {
-    selectBox.innerHTML = '<option value="">No storms found</option>';
-    return;
-  }
-
-  stormDataList.forEach((storm, index) => {
-    const option = document.createElement("option");
-    option.value = index;
-    option.textContent = storm.name || storm.id || `Storm ${index + 1}`;
-    selectBox.appendChild(option);
-  });
-
-  updateDashboard();
-}
 
     function updateDashboard() {
       const selectBox = document.getElementById("stormSelect");
@@ -102,10 +108,12 @@
       if (selectedIndex === "" || !stormDataList[selectedIndex]) return;
 
       const storm = stormDataList[selectedIndex];
+      const cacheBuster = `?t=${new Date().getTime()}`;
 
-      // Load image directly from repository
-      document.getElementById("stormMap").src = storm.img_filename || `${storm.id}.png`;
-      
+      // Set Map Image
+      const imageFile = storm.img_filename || `${storm.id}.png`;
+      document.getElementById("stormMap").src = `${imageFile}${cacheBuster}`;
+
       // Update Table Metrics
       document.getElementById("hitRate").innerText = storm.hitRate || "-";
       document.getElementById("wpcArea").innerText = storm.wpcArea || "-";
