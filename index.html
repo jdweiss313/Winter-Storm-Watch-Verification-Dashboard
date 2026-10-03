@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Winter Storm Verification Dashboard</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 15px; background-color: #f9f9f9; }
+    .select-container { margin-bottom: 20px; }
+    .select-box { padding: 8px 12px; font-size: 15px; width: 300px; border-radius: 4px; border: 1px solid #ccc; background-color: white; }
+    .content-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+    .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    img { max-width: 100%; height: auto; border-radius: 4px; display: block; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+    th { background-color: #003366; color: white; }
+    tr:nth-child(even) { background-color: #f2f2f2; }
+  </style>
+</head>
+<body>
+
+  <div class="select-container">
+    <label for="stormSelect"><strong>Select Winter Storm Event:</strong></label><br>
+    <select id="stormSelect" class="select-box" onchange="updateDashboard()">
+      <option value="">-- Loading storms... --</option>
+    </select>
+  </div>
+
+  <div class="content-grid">
+    <!-- Map Display -->
+    <div class="card">
+      <h3 style="margin-top:0;">Verification Map</h3>
+      <img id="stormMap" src="" alt="Select a storm to view verification map">
+    </div>
+
+    <!-- Metrics Table -->
+    <div class="card">
+      <h3 style="margin-top:0;">Spatial Verification Metrics</h3>
+      <table id="metricsTable">
+        <thead>
+          <tr><th>Metric</th><th>Value</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Hit Rate (CSI)</td><td id="hitRate">-</td></tr>
+          <tr><td>WPC Proposed Area</td><td id="wpcArea">-</td></tr>
+          <tr><td>NWS Issued Area</td><td id="nwsArea">-</td></tr>
+          <tr><td>Mutual Agreement Area</td><td id="agreeArea">-</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    // List your storm JSON filenames here
+    const STORM_FILES = [
+      "November_24_2025.json"
+    ];
+
+    let stormDataList = [];
+
+    async function loadAllStorms() {
+      const selectBox = document.getElementById("stormSelect");
+      stormDataList = [];
+
+      for (const fileName of STORM_FILES) {
+        try {
+          const response = await fetch(fileName);
+          if (response.ok) {
+            const data = await response.json();
+            stormDataList.push(data);
+          }
+        } catch (err) {
+          console.error(`Failed to load ${fileName}:`, err);
+        }
+      }
+
+      selectBox.innerHTML = "";
+
+      if (stormDataList.length === 0) {
+        selectBox.innerHTML = '<option value="">No storms found</option>';
+        return;
+      }
+
+      stormDataList.forEach((storm, index) => {
+        const option = document.createElement("option");
+        option.value = index;
+        option.textContent = storm.name || storm.id || `Storm ${index + 1}`;
+        selectBox.appendChild(option);
+      });
+
+      updateDashboard();
+    }
+
+    function updateDashboard() {
+      const selectBox = document.getElementById("stormSelect");
+      const selectedIndex = selectBox.value;
+
+      if (selectedIndex === "" || !stormDataList[selectedIndex]) return;
+
+      const storm = stormDataList[selectedIndex];
+
+      // Load image directly from repository
+      document.getElementById("stormMap").src = storm.img_filename || `${storm.id}.png`;
+      
+      // Update Table Metrics
+      document.getElementById("hitRate").innerText = storm.hitRate || "-";
+      document.getElementById("wpcArea").innerText = storm.wpcArea || "-";
+      document.getElementById("nwsArea").innerText = storm.nwsArea || "-";
+      document.getElementById("agreeArea").innerText = storm.agreeArea || "-";
+    }
+
+    window.onload = loadAllStorms;
+  </script>
+</body>
+</html>
