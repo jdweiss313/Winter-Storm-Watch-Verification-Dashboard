@@ -7,9 +7,13 @@
     body { font-family: Arial, sans-serif; margin: 15px; background-color: #f9f9f9; }
     .select-container { margin-bottom: 20px; }
     .select-box { padding: 8px 12px; font-size: 15px; width: 300px; border-radius: 4px; border: 1px solid #ccc; background-color: white; }
-    .content-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+    
+    /* Image Grid: Side-by-side images */
+    .image-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+    
     .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    img { max-width: 100%; height: auto; border-radius: 4px; display: block; }
+    img { max-width: 100%; height: auto; border-radius: 4px; display: block; margin: 0 auto; }
+    
     table { width: 100%; border-collapse: collapse; margin-top: 10px; }
     th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
     th { background-color: #003366; color: white; }
@@ -25,28 +29,35 @@
     </select>
   </div>
 
-  <div class="content-grid">
-    <!-- Map Display -->
+  <!-- Top Section: Two Image Cards Side-by-Side -->
+  <div class="image-grid">
+    <!-- CONUS Map -->
     <div class="card">
-      <h3 style="margin-top:0;">Verification Map</h3>
-      <img id="stormMap" src="" alt="Select a storm to view verification map">
+      <h3 style="margin-top:0;">CONUS Verification Map</h3>
+      <img id="stormMap" src="" alt="Select a storm to view CONUS verification map">
     </div>
 
-    <!-- Metrics Table -->
+    <!-- Zoomed Map -->
     <div class="card">
-      <h3 style="margin-top:0;">Spatial Verification Metrics</h3>
-      <table id="metricsTable">
-        <thead>
-          <tr><th>Metric</th><th>Value</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>Hit Rate (CSI)</td><td id="hitRate">-</td></tr>
-          <tr><td>WPC Proposed Area</td><td id="wpcArea">-</td></tr>
-          <tr><td>NWS Issued Area</td><td id="nwsArea">-</td></tr>
-          <tr><td>Mutual Agreement Area</td><td id="agreeArea">-</td></tr>
-        </tbody>
-      </table>
+      <h3 style="margin-top:0;">Regional Difference (Zoomed)</h3>
+      <img id="zoomedMap" src="" alt="Select a storm to view zoomed map">
     </div>
+  </div>
+
+  <!-- Bottom Section: Metrics Table Spanning Full Width -->
+  <div class="card">
+    <h3 style="margin-top:0;">Spatial Verification Metrics</h3>
+    <table id="metricsTable">
+      <thead>
+        <tr><th>Metric</th><th>Value</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Hit Rate (CSI)</td><td id="hitRate">-</td></tr>
+        <tr><td>WPC Proposed Area</td><td id="wpcArea">-</td></tr>
+        <tr><td>NWS Issued Area</td><td id="nwsArea">-</td></tr>
+        <tr><td>Mutual Agreement Area</td><td id="agreeArea">-</td></tr>
+      </tbody>
+    </table>
   </div>
 
   <script>
@@ -56,17 +67,14 @@
       const selectBox = document.getElementById("stormSelect");
       stormDataList = [];
 
-      // Cache-buster parameter to guarantee fresh reads from GitHub
       const cacheBuster = `?t=${new Date().getTime()}`;
 
       try {
-        // 1. Fetch manifest file listing all storm JSON files
         const manifestResponse = await fetch(`manifest.json${cacheBuster}`);
         if (!manifestResponse.ok) throw new Error("Could not load manifest.json");
         
         const stormFiles = await manifestResponse.json();
 
-        // 2. Load each JSON file listed in manifest
         for (const fileName of stormFiles) {
           try {
             const response = await fetch(`${fileName}${cacheBuster}`);
@@ -89,7 +97,6 @@
         return;
       }
 
-      // Populate dropdown list
       stormDataList.forEach((storm, index) => {
         const option = document.createElement("option");
         option.value = index;
@@ -97,7 +104,6 @@
         selectBox.appendChild(option);
       });
 
-      // Load first storm automatically
       updateDashboard();
     }
 
@@ -110,11 +116,16 @@
       const storm = stormDataList[selectedIndex];
       const cacheBuster = `?t=${new Date().getTime()}`;
 
-      // Set Map Image
+      // 1. Set CONUS Map Image
       const imageFile = storm.img_filename || `${storm.id}.png`;
       document.getElementById("stormMap").src = `${imageFile}${cacheBuster}`;
 
-      // Update Table Metrics
+      // 2. Set Zoomed Map Image (Checks JSON key or falls back to _zoomed.png format)
+      const baseName = imageFile.substring(0, imageFile.lastIndexOf('.')) || imageFile;
+      const zoomedFile = storm.zoomed_img_filename || `${baseName}_zoomed.png`;
+      document.getElementById("zoomedMap").src = `${zoomedFile}${cacheBuster}`;
+
+      // 3. Update Table Metrics
       document.getElementById("hitRate").innerText = storm.hitRate || "-";
       document.getElementById("wpcArea").innerText = storm.wpcArea || "-";
       document.getElementById("nwsArea").innerText = storm.nwsArea || "-";
