@@ -8,33 +8,12 @@
     .select-container { margin-bottom: 20px; }
     .select-box { padding: 8px 12px; font-size: 15px; width: 300px; border-radius: 4px; border: 1px solid #ccc; background-color: white; }
     
-    .content-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+    /* Image Grid: Side-by-side images */
+    .image-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+    
     .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
     img { max-width: 100%; height: auto; border-radius: 4px; display: block; margin: 0 auto; }
     
-    /* Tab Styling */
-    .tab-container { display: flex; border-bottom: 2px solid #ccc; margin-bottom: 15px; }
-    .tab-button {
-      padding: 8px 16px;
-      border: none;
-      background-color: transparent;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: bold;
-      color: #555;
-      outline: none;
-      border-bottom: 3px solid transparent;
-      margin-bottom: -2px;
-    }
-    .tab-button.active {
-      color: #003366;
-      border-bottom: 3px solid #003366;
-    }
-    .tab-button:hover { color: #003366; }
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
-
-    /* Table Styling */
     table { width: 100%; border-collapse: collapse; margin-top: 10px; }
     th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
     th { background-color: #003366; color: white; }
@@ -50,40 +29,35 @@
     </select>
   </div>
 
-  <div class="content-grid">
-    <!-- Map Display Card with Tabs -->
+  <!-- Top Section: Two Image Cards Side-by-Side -->
+  <div class="image-grid">
+    <!-- CONUS Map -->
     <div class="card">
-      <div class="tab-container">
-        <button class="tab-button active" onclick="switchTab('conus')">CONUS Verification Map</button>
-        <button class="tab-button" onclick="switchTab('zoomed')">Regional Difference (Zoomed)</button>
-      </div>
-
-      <!-- CONUS Tab Content -->
-      <div id="conusTab" class="tab-content active">
-        <img id="stormMap" src="" alt="Select a storm to view CONUS verification map">
-      </div>
-
-      <!-- Zoomed Tab Content -->
-      <div id="zoomedTab" class="tab-content">
-        <img id="zoomedMap" src="" alt="Select a storm to view zoomed map">
-      </div>
+      <h3 style="margin-top:0;">CONUS Verification Map</h3>
+      <img id="stormMap" src="" alt="Select a storm to view CONUS verification map">
     </div>
 
-    <!-- Metrics Table -->
+    <!-- Zoomed Map -->
     <div class="card">
-      <h3 style="margin-top:0;">Spatial Verification Metrics</h3>
-      <table id="metricsTable">
-        <thead>
-          <tr><th>Metric</th><th>Value</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>Hit Rate (CSI)</td><td id="hitRate">-</td></tr>
-          <tr><td>WPC Proposed Area</td><td id="wpcArea">-</td></tr>
-          <tr><td>NWS Issued Area</td><td id="nwsArea">-</td></tr>
-          <tr><td>Mutual Agreement Area</td><td id="agreeArea">-</td></tr>
-        </tbody>
-      </table>
+      <h3 style="margin-top:0;">Regional Difference (Zoomed)</h3>
+      <img id="zoomedMap" src="" alt="Select a storm to view zoomed map">
     </div>
+  </div>
+
+  <!-- Bottom Section: Metrics Table Spanning Full Width -->
+  <div class="card">
+    <h3 style="margin-top:0;">Spatial Verification Metrics</h3>
+    <table id="metricsTable">
+      <thead>
+        <tr><th>Metric</th><th>Value</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Hit Rate (CSI)</td><td id="hitRate">-</td></tr>
+        <tr><td>WPC Proposed Area</td><td id="wpcArea">-</td></tr>
+        <tr><td>NWS Issued Area</td><td id="nwsArea">-</td></tr>
+        <tr><td>Mutual Agreement Area</td><td id="agreeArea">-</td></tr>
+      </tbody>
+    </table>
   </div>
 
   <script>
@@ -146,7 +120,7 @@
       const imageFile = storm.img_filename || `${storm.id}.png`;
       document.getElementById("stormMap").src = `${imageFile}${cacheBuster}`;
 
-      // 2. Set Zoomed Map Image (Checks JSON key or falls back to _zoomed.png)
+      // 2. Set Zoomed Map Image (Checks JSON key or falls back to _zoomed.png format)
       const baseName = imageFile.substring(0, imageFile.lastIndexOf('.')) || imageFile;
       const zoomedFile = storm.zoomed_img_filename || `${baseName}_zoomed.png`;
       document.getElementById("zoomedMap").src = `${zoomedFile}${cacheBuster}`;
@@ -156,23 +130,6 @@
       document.getElementById("wpcArea").innerText = storm.wpcArea || "-";
       document.getElementById("nwsArea").innerText = storm.nwsArea || "-";
       document.getElementById("agreeArea").innerText = storm.agreeArea || "-";
-    }
-
-    // Tab Switching Logic
-    function switchTab(tabName) {
-      const buttons = document.querySelectorAll('.tab-button');
-      const contents = document.querySelectorAll('.tab-content');
-
-      buttons.forEach(btn => btn.classList.remove('active'));
-      contents.forEach(content => content.classList.remove('active'));
-
-      if (tabName === 'conus') {
-        buttons[0].classList.add('active');
-        document.getElementById('conusTab').classList.add('active');
-      } else {
-        buttons[1].classList.add('active');
-        document.getElementById('zoomedTab').classList.add('active');
-      }
     }
 
     window.onload = loadAllStorms;
