@@ -108,29 +108,36 @@
     }
 
     function updateDashboard() {
-      const selectBox = document.getElementById("stormSelect");
-      const selectedIndex = selectBox.value;
+  const selectBox = document.getElementById("stormSelect");
+  const selectedIndex = selectBox.value;
 
-      if (selectedIndex === "" || !stormDataList[selectedIndex]) return;
+  if (selectedIndex === "" || !stormDataList[selectedIndex]) return;
 
-      const storm = stormDataList[selectedIndex];
-      const cacheBuster = `?t=${new Date().getTime()}`;
+  const storm = stormDataList[selectedIndex];
+  const cacheBuster = `?t=${new Date().getTime()}`;
 
-      // 1. Set CONUS Map Image
-      const imageFile = storm.img_filename || `${storm.id}.png`;
-      document.getElementById("stormMap").src = `${imageFile}${cacheBuster}`;
+  // 1. Determine base file name (e.g., "March_12_2026")
+  let baseName = "";
+  if (storm.img_filename) {
+    baseName = storm.img_filename.substring(0, storm.img_filename.lastIndexOf('.'));
+  } else if (storm.id) {
+    baseName = storm.id;
+  }
 
-      // 2. Set Zoomed Map Image (Checks JSON key or falls back to _zoomed.png format)
-      const baseName = imageFile.substring(0, imageFile.lastIndexOf('.')) || imageFile;
-      const zoomedFile = storm.zoomed_img_filename || `${baseName}_zoomed.png`;
-      document.getElementById("zoomedMap").src = `${zoomedFile}${cacheBuster}`;
+  // 2. Build exact image paths
+  const conusFile = `${baseName}.png`;
+  const zoomedFile = `${baseName}_zoomed.png`;
 
-      // 3. Update Table Metrics
-      document.getElementById("hitRate").innerText = storm.hitRate || "-";
-      document.getElementById("wpcArea").innerText = storm.wpcArea || "-";
-      document.getElementById("nwsArea").innerText = storm.nwsArea || "-";
-      document.getElementById("agreeArea").innerText = storm.agreeArea || "-";
-    }
+  // 3. Set Image Sources
+  document.getElementById("stormMap").src = `${conusFile}${cacheBuster}`;
+  document.getElementById("zoomedMap").src = `${zoomedFile}${cacheBuster}`;
+
+  // 4. Update Table Metrics
+  document.getElementById("hitRate").innerText = storm.hitRate || "-";
+  document.getElementById("wpcArea").innerText = storm.wpcArea || "-";
+  document.getElementById("nwsArea").innerText = storm.nwsArea || "-";
+  document.getElementById("agreeArea").innerText = storm.agreeArea || "-";
+}
 
     window.onload = loadAllStorms;
   </script>
