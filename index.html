@@ -2,22 +2,44 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Winter Storm Watch Verification Dashboard</title>
+  <title>Winter Storm Verification Dashboard</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 15px; background-color: #f9f9f9; }
     .select-container { margin-bottom: 20px; }
     .select-box { padding: 8px 12px; font-size: 15px; width: 300px; border-radius: 4px; border: 1px solid #ccc; background-color: white; }
     
-    /* Image Grid: Side-by-side images */
-    .image-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+    /* Main 2-Column Grid for Watch vs Warning */
+    .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+    .column-title { text-align: center; color: #003366; margin-top: 0; margin-bottom: 15px; border-bottom: 2px solid #003366; padding-bottom: 5px; }
     
-    .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
     img { max-width: 100%; height: auto; border-radius: 4px; display: block; margin: 0 auto; }
     
+    /* Tab Styling */
+    .tab-container { display: flex; border-bottom: 2px solid #ccc; margin-bottom: 15px; }
+    .tab-button {
+      padding: 8px 16px;
+      border: none;
+      background-color: transparent;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+      color: #555;
+      outline: none;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+    }
+    .tab-button.active { color: #003366; border-bottom: 3px solid #003366; }
+    .tab-button:hover { color: #003366; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Table Styling */
     table { width: 100%; border-collapse: collapse; margin-top: 10px; }
     th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
     th { background-color: #003366; color: white; }
     tr:nth-child(even) { background-color: #f2f2f2; }
+    .no-data { font-style: italic; color: #777; text-align: center; padding: 20px 0; }
   </style>
 </head>
 <body>
@@ -29,43 +51,88 @@
     </select>
   </div>
 
-  <!-- Top Section: Two Image Cards Side-by-Side -->
-  <div class="image-grid">
-    <!-- CONUS Map -->
-    <div class="card">
-      <h3 style="margin-top:0;">CONUS Verification Map</h3>
-      <img id="stormMap" src="" alt="Select a storm to view CONUS verification map">
+  <div class="dashboard-grid">
+    
+    <!-- LEFT COLUMN: WATCH -->
+    <div>
+      <h2 class="column-title">Winter Storm Watch Verification</h2>
+      
+      <!-- Watch Maps Card -->
+      <div class="card">
+        <div class="tab-container">
+          <button class="tab-button active" onclick="switchTab('watch', 'conus')">CONUS View</button>
+          <button class="tab-button" onclick="switchTab('watch', 'zoomed')">Zoomed View</button>
+        </div>
+        <div id="watchConusTab" class="tab-content active">
+          <img id="watchConusMap" src="" alt="No Watch CONUS Map available">
+        </div>
+        <div id="watchZoomedTab" class="tab-content">
+          <img id="watchZoomedMap" src="" alt="No Watch Zoomed Map available">
+        </div>
+      </div>
+
+      <!-- Watch Metrics Card -->
+      <div class="card">
+        <h3 style="margin-top:0;">Watch Spatial Verification Metrics</h3>
+        <table>
+          <thead>
+            <tr><th>Metric</th><th>Value</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Hit Rate (CSI)</td><td id="watchHitRate">-</td></tr>
+            <tr><td>WPC Proposed Area</td><td id="watchWpcArea">-</td></tr>
+            <tr><td>NWS Issued Area</td><td id="watchNwsArea">-</td></tr>
+            <tr><td>Mutual Agreement Area</td><td id="watchAgreeArea">-</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
-    <!-- Zoomed Map -->
-    <div class="card">
-      <h3 style="margin-top:0;">Regional Difference (Zoomed)</h3>
-      <img id="zoomedMap" src="" alt="Select a storm to view zoomed map">
-    </div>
-  </div>
+    <!-- RIGHT COLUMN: WARNING -->
+    <div>
+      <h2 class="column-title">Winter Storm Warning Verification</h2>
+      
+      <!-- Warning Maps Card -->
+      <div class="card">
+        <div class="tab-container">
+          <button class="tab-button active" onclick="switchTab('warning', 'conus')">CONUS View</button>
+          <button class="tab-button" onclick="switchTab('warning', 'zoomed')">Zoomed View</button>
+        </div>
+        <div id="warningConusTab" class="tab-content active">
+          <img id="warningConusMap" src="" alt="No Warning CONUS Map available">
+        </div>
+        <div id="warningZoomedTab" class="tab-content">
+          <img id="warningZoomedMap" src="" alt="No Warning Zoomed Map available">
+        </div>
+      </div>
 
-  <!-- Bottom Section: Metrics Table Spanning Full Width -->
-  <div class="card">
-    <h3 style="margin-top:0;">Spatial Verification Metrics</h3>
-    <table id="metricsTable">
-      <thead>
-        <tr><th>Metric</th><th>Value</th></tr>
-      </thead>
-      <tbody>
-        <tr><td>Hit Rate (CSI)</td><td id="hitRate">-</td></tr>
-        <tr><td>WPC Proposed Area</td><td id="wpcArea">-</td></tr>
-        <tr><td>NWS Issued Area</td><td id="nwsArea">-</td></tr>
-        <tr><td>Mutual Agreement Area</td><td id="agreeArea">-</td></tr>
-      </tbody>
-    </table>
+      <!-- Warning Metrics Card -->
+      <div class="card">
+        <h3 style="margin-top:0;">Warning Spatial Verification Metrics</h3>
+        <table>
+          <thead>
+            <tr><th>Metric</th><th>Value</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Hit Rate (CSI)</td><td id="warningHitRate">-</td></tr>
+            <tr><td>WPC Proposed Area</td><td id="warningWpcArea">-</td></tr>
+            <tr><td>NWS Issued Area</td><td id="warningNwsArea">-</td></tr>
+            <tr><td>Mutual Agreement Area</td><td id="warningAgreeArea">-</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
   </div>
 
   <script>
-    let stormDataList = [];
+    // Stores grouped storm data by date: { "January_30_2026": { watch: {...}, warning: {...} } }
+    let groupedStorms = {};
+    let dateKeys = [];
 
     async function loadAllStorms() {
       const selectBox = document.getElementById("stormSelect");
-      stormDataList = [];
+      groupedStorms = {};
 
       const cacheBuster = `?t=${new Date().getTime()}`;
 
@@ -80,7 +147,26 @@
             const response = await fetch(`${fileName}${cacheBuster}`);
             if (response.ok) {
               const data = await response.json();
-              stormDataList.push(data);
+              
+              // Extract base date name (e.g. "January_30_2026" from "January_30_2026-Watch.json")
+              const cleanFileName = fileName.replace('.json', '');
+              let dateKey = cleanFileName;
+              let type = 'watch'; // Default fallback
+
+              if (cleanFileName.endsWith('-Watch')) {
+                dateKey = cleanFileName.replace('-Watch', '');
+                type = 'watch';
+              } else if (cleanFileName.endsWith('-Warning')) {
+                dateKey = cleanFileName.replace('-Warning', '');
+                type = 'warning';
+              }
+
+              if (!groupedStorms[dateKey]) {
+                groupedStorms[dateKey] = { rawName: dateKey };
+              }
+              
+              data._fileName = cleanFileName;
+              groupedStorms[dateKey][type] = data;
             }
           } catch (err) {
             console.error(`Error loading ${fileName}:`, err);
@@ -91,16 +177,18 @@
       }
 
       selectBox.innerHTML = "";
+      dateKeys = Object.keys(groupedStorms);
 
-      if (stormDataList.length === 0) {
+      if (dateKeys.length === 0) {
         selectBox.innerHTML = '<option value="">No storms found</option>';
         return;
       }
 
-      stormDataList.forEach((storm, index) => {
+      // Populate dropdown list using clean date strings
+      dateKeys.forEach((dateKey, index) => {
         const option = document.createElement("option");
         option.value = index;
-        option.textContent = storm.name || storm.id || storm.img_filename || `Storm ${index + 1}`;
+        option.textContent = dateKey.replace(/_/g, " "); // Displays "January 30 2026"
         selectBox.appendChild(option);
       });
 
@@ -108,36 +196,71 @@
     }
 
     function updateDashboard() {
-  const selectBox = document.getElementById("stormSelect");
-  const selectedIndex = selectBox.value;
+      const selectBox = document.getElementById("stormSelect");
+      const selectedIndex = selectBox.value;
 
-  if (selectedIndex === "" || !stormDataList[selectedIndex]) return;
+      if (selectedIndex === "" || !dateKeys[selectedIndex]) return;
 
-  const storm = stormDataList[selectedIndex];
-  const cacheBuster = `?t=${new Date().getTime()}`;
+      const dateKey = dateKeys[selectedIndex];
+      const stormGroup = groupedStorms[dateKey];
+      const cacheBuster = `?t=${new Date().getTime()}`;
 
-  // 1. Determine base file name (e.g., "March_12_2026")
-  let baseName = "";
-  if (storm.img_filename) {
-    baseName = storm.img_filename.substring(0, storm.img_filename.lastIndexOf('.'));
-  } else if (storm.id) {
-    baseName = storm.id;
-  }
+      // --- 1. UPDATE WATCH DATA ---
+      if (stormGroup.watch) {
+        const watchBase = stormGroup.watch._fileName;
+        document.getElementById("watchConusMap").src = `${watchBase}.png${cacheBuster}`;
+        document.getElementById("watchZoomedMap").src = `${watchBase}_zoomed.png${cacheBuster}`;
+        
+        document.getElementById("watchHitRate").innerText = stormGroup.watch.hitRate || "-";
+        document.getElementById("watchWpcArea").innerText = stormGroup.watch.wpcArea || "-";
+        document.getElementById("watchNwsArea").innerText = stormGroup.watch.nwsArea || "-";
+        document.getElementById("watchAgreeArea").innerText = stormGroup.watch.agreeArea || "-";
+      } else {
+        clearColumn('watch');
+      }
 
-  // 2. Build exact image paths
-  const conusFile = `${baseName}.png`;
-  const zoomedFile = `${baseName}_zoomed.png`;
+      // --- 2. UPDATE WARNING DATA ---
+      if (stormGroup.warning) {
+        const warningBase = stormGroup.warning._fileName;
+        document.getElementById("warningConusMap").src = `${warningBase}.png${cacheBuster}`;
+        document.getElementById("warningZoomedMap").src = `${warningBase}_zoomed.png${cacheBuster}`;
+        
+        document.getElementById("warningHitRate").innerText = stormGroup.warning.hitRate || "-";
+        document.getElementById("warningWpcArea").innerText = stormGroup.warning.wpcArea || "-";
+        document.getElementById("warningNwsArea").innerText = stormGroup.warning.nwsArea || "-";
+        document.getElementById("warningAgreeArea").innerText = stormGroup.warning.agreeArea || "-";
+      } else {
+        clearColumn('warning');
+      }
+    }
 
-  // 3. Set Image Sources
-  document.getElementById("stormMap").src = `${conusFile}${cacheBuster}`;
-  document.getElementById("zoomedMap").src = `${zoomedFile}${cacheBuster}`;
+    function clearColumn(type) {
+      document.getElementById(`${type}ConusMap`).src = "";
+      document.getElementById(`${type}ZoomedMap`).src = "";
+      document.getElementById(`${type}HitRate`).innerText = "N/A";
+      document.getElementById(`${type}WpcArea`).innerText = "N/A";
+      document.getElementById(`${type}NwsArea`).innerText = "N/A";
+      document.getElementById(`${type}AgreeArea`).innerText = "N/A";
+    }
 
-  // 4. Update Table Metrics
-  document.getElementById("hitRate").innerText = storm.hitRate || "-";
-  document.getElementById("wpcArea").innerText = storm.wpcArea || "-";
-  document.getElementById("nwsArea").innerText = storm.nwsArea || "-";
-  document.getElementById("agreeArea").innerText = storm.agreeArea || "-";
-}
+    // Independent Tab Switcher for Watch & Warning Cards
+    function switchTab(type, tab) {
+      const conusTab = document.getElementById(`${type}ConusTab`);
+      const zoomedTab = document.getElementById(`${type}ZoomedTab`);
+      const buttons = conusTab.parentElement.querySelectorAll('.tab-button');
+
+      if (tab === 'conus') {
+        buttons[0].classList.add('active');
+        buttons[1].classList.remove('active');
+        conusTab.classList.add('active');
+        zoomedTab.classList.remove('active');
+      } else {
+        buttons[0].classList.remove('active');
+        buttons[1].classList.add('active');
+        conusTab.classList.remove('active');
+        zoomedTab.classList.add('active');
+      }
+    }
 
     window.onload = loadAllStorms;
   </script>
