@@ -1,0 +1,11 @@
+{
+  "id": "Month_Day__Year",
+  "name": "Month Day, Year",
+  "season": "2025-2026",
+  "img_filename": "Month_Day__Year.png",
+  "img_filename_zoom": "Month_Day__Year_zoomed.png",
+  "hitRate": "87.67 %",
+  "wpcArea": "43,000.65 km\u00b2",
+  "nwsArea": "11,502.60 km\u00b2",
+  "agreeArea": "387,572.01 km\u00b2"
+}
